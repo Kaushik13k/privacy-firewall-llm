@@ -1,0 +1,89 @@
+# 🔐 Privacy Firewall for LLMs
+
+## Overview
+As language models enter production environments, ensuring privacy, safety, and control becomes critical. This project is a modular AI privacy firewall — a middleware that sits between your application and an LLM (like OpenAI, Gemini, etc.) to enforce:
+
+
+| Feature                     | Description                                                              |
+| --------------------------- | ------------------------------------------------------------------------ |
+|PII Detection | Detects and optionally redacts PII from user prompts                     |
+|Session Context Memory   | Maintains per-session rolling context based on token usage               |
+|Prompt Injection Guard   | Detects common prompt injection attack phrases                           |
+|Abuse Pattern Monitoring | Tracks suspicious users across time windows (rate + semantic thresholds) |
+|Risk Scoring Engine      | Assigns scores based on length, keywords, and detected PII               |
+|Token Budget Manager     | Ensures token-limited session memory per user                            |
+
+
+## Architecture
+
+                        ┌────────────────────┐
+                        │   User / Frontend  │
+                        └─────────┬──────────┘
+                                  │
+                       ┌──────────▼──────────┐
+                       │   FastAPI Proxy     │
+                       │ /ask → LLM Backend  │
+                       └──────────┬──────────┘
+          ┌──────────────┬────────┴───────────────┬────────────┐
+          │              │                        │            │
+      PII Detector  🛡 Prompt Guard       Abuse Detector  🧠 Memory Store
+          │              │                        │            │
+          └──────────────┴────────┬───────────────┘────────────┘
+                                  ▼
+                          Risk Scoring Engine
+                                  ┬
+                                  ▼
+                        LLM (OpenAI / Gemini)
+                                  ┬
+                                  ▼
+                       Streamlit Dashboard (Live Logs)
+
+
+## Project Structure
+```
+.
+└── app
+    ├── api
+    │   ├── main.py
+    │   ├── middlewares
+    │   │   └── pii_firewall.py
+    │   ├── rate_limiter.py
+    │   └── routers
+    │       ├── chat.py
+    │       └── health.py
+    ├── firewall
+    │   ├── abuse_detector.py
+    │   ├── prompt_injection.py
+    │   ├── scorer.py
+    │   ├── session_memory.py
+    │   └── token_utils.py
+    ├── payloads.md
+    ├── README
+    ├── requirements.txt
+    ├── streamlit_dashboard
+    │   └── app.py
+    └── tests
+        └── __init__.py
+```
+
+## Getting Started
+1.  ### Set up environment
+  ```
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  ```
+2. ### Install Redis
+  ```
+  brew install redis
+  ```
+3. ### Start the backend API
+  ```
+  cd app
+  PYTHONPATH=. uvicorn api.main:app --reload
+  ```
+4. ### Start the dashboard
+  ```
+  cd app/streamlit_dashboard
+  streamlit run app.py
+  ```
