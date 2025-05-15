@@ -8,8 +8,8 @@ st.set_page_config(page_title="AI Privacy Firewall Dashboard", layout="wide")
 st.title("🌐 AI Privacy Firewall Dashboard")
 
 st.markdown("""
-This dashboard helps you ensure your input is free of Personally Identifiable Information (PII). 
-It processes the text, detects PII, scores the risk, and returns a sanitized version.
+This dashboard demonstrates a basic implementation of Personally Identifiable Information (PII) protection.  
+It processes input text, detects PII, scores the associated risk, and returns a sanitized version.
 """)
 
 input_text = st.text_area(
