@@ -3,11 +3,16 @@ import json
 import hashlib
 from better_profanity import profanity
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
 from starlette.middleware.base import BaseHTTPMiddleware
 from firewall.token_utils import num_tokens_from_string
+from firewall.scorer import compute_risk_score
+from firewall.prompt_injection import (
+    detect_prompt_injection,
+    get_triggered_phrases
+)
 
 
 analyzer = AnalyzerEngine()
@@ -32,6 +37,9 @@ class PIIFirewallMiddleware(BaseHTTPMiddleware):
 
             if prompt:
                 results = analyzer.analyze(text=prompt, language="en")
+                pii_entities = [res.entity_type for res in results]
+                risk_score = compute_risk_score(prompt, pii_entities)
+
                 anonymized = anonymizer.anonymize(
                     text=prompt, analyzer_results=results
                 )
@@ -65,6 +73,15 @@ class PIIFirewallMiddleware(BaseHTTPMiddleware):
                 data["profanity_detected"] = True
             else:
                 data["profanity_detected"] = False
+
+            print(f"Risk Score: {risk_score}")
+            if detect_prompt_injection(prompt):
+                print(f"[BLOCKED] Prompt injection attempt detected: {get_triggered_phrases(prompt)}")
+                print(f"Risk Score: {risk_score}")
+                if risk_score >= 25:
+                    data["risk_score"] = risk_score
+                    data["error"] = "Prompt injection attempt detected."
+                    data["triggered_phrases"] = get_triggered_phrases(prompt)
 
             new_body = json.dumps(data)
             return Response(content=new_body, media_type="application/json")

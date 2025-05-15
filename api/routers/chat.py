@@ -6,7 +6,7 @@ from ..rate_limiter import limiter
 from fastapi import APIRouter, Request
 from firewall.session_memory import MemoryStore
 from firewall.abuse_detector import AbuseDetector
-
+from firewall.prompt_injection import detect_prompt_injection, get_triggered_phrases
 
 router = APIRouter()
 abuse_detector = AbuseDetector()
@@ -36,6 +36,17 @@ async def ask(prompt: Prompt, request: Request):
     messages = context + [{"role": "user", "content": prompt.message}]
     contents = [{"role": msg["role"], "parts": [msg["content"]]}
                 for msg in messages]
+    print("-----------------")
+    print(**meta)
+    
+    if detect_prompt_injection(prompt.message):
+        triggered_phrases = get_triggered_phrases(prompt.message)
+        return {
+            "error": "Prompt injection detected.",
+            "triggered_phrases": triggered_phrases,
+            "redacted_prompt": prompt.message,
+            **meta
+        }
 
     client = genai.Client(api_key=os.getenv(
         "GENAI_API_KEY", "abc"))

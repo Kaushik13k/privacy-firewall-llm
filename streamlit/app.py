@@ -38,6 +38,10 @@ if submit_button:
         result = response.json()
 
         with st.expander("🔍 Original Input", expanded=True):
+            st.write(input_text)
+
+
+        with st.expander("🔍 Output after PII format", expanded=True):
             st.write(result.get("redacted_prompt",
                      "No redacted prompt available."))
 
@@ -45,6 +49,9 @@ if submit_button:
             pii_status = "No PII Detected"
             if "pii" in result:
                 pii_status = f"🔴 **PII Detected**: {result['pii']}"
+
+            if "error" in result:
+                st.error(f"❌ Error: {result['error']}")
             st.write(f"**PII Detection**: {pii_status}")
 
             risk_score = result.get("risk_score", 0)

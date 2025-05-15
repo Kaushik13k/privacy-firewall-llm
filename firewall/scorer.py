@@ -2,7 +2,10 @@ from typing import List
 
 
 SUSPICIOUS_KEYWORDS = {"bypass", "jailbreak",
-                       "ignore previous", "simulate", "exploit"}
+                       "ignore previous", "simulate", "exploit", "hack", "hacker", "attack",
+                       "malicious", "unauthorized", "intrusion", "breach",
+                       "malware", "spyware", "phishing", "ransomware", "trojan",
+                       "virus", "worm", "rootkit", "keylogger", "backdoor",}
 
 
 def compute_risk_score(prompt: str, pii_entities: List[str]) -> int:
